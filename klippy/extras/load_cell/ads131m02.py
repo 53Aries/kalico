@@ -9,6 +9,7 @@ from klippy.extras.bulk_sensor import FixedFreqReader, \
     BatchBulkHelper
 from klippy.pins import PrinterPins
 from klippy.extras.load_cell.interfaces import LoadCellSensor
+from klippy.reactor import Reactor
 
 # Constants
 BYTES_PER_SAMPLE = 4
@@ -30,6 +31,7 @@ SAMPLE_ERROR_RESET = 0x40000000  # 1 << 30
 class ADS131M02(LoadCellSensor):
     def __init__(self, config: ConfigWrapper):
         self.printer: Printer = config.get_printer()
+        self.reactor = self.printer.get_reactor()
         self.name = config.get_name().split()[-1]
         self.last_error_count = 0
         self.consecutive_fails = 0
@@ -188,6 +190,8 @@ class ADS131M02(LoadCellSensor):
     def _write_reg(self, addr, value):
         """Write a single register."""
         self._send_frame(self._wreg_cmd(addr), value, 0x0000, 0x0000)
+        # Small delay after write to allow register to update
+        self.reactor.pause(self.reactor.monotonic() + 0.001)
 
     def _write_and_verify_reg(self, addr, value):
         """Write a register and verify the value was set."""
@@ -200,6 +204,9 @@ class ADS131M02(LoadCellSensor):
 
     def reset_chip(self):
         self._send_frame(RESET_CMD, 0x0000, 0x0000, 0x0000)
+        # Wait for reset to complete (datasheet specifies tREADY = 2^14 * tCLKIN max)
+        # With 8.192MHz CLKIN, this is ~2ms. Use 10ms to be safe.
+        self.reactor.pause(self.reactor.monotonic() + 0.010)
         status = self._read_reg(STATUS_REG)
         if not (status & STATUS_RESET_BIT):
             raise self.printer.command_error(
