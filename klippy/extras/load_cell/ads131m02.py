@@ -184,22 +184,24 @@ class ADS131M02(LoadCellSensor):
 
     def _read_reg(self, addr):
         """Read a single register, returns 16-bit value."""
-        # For ADS131M02: send RREG command, then in the RESPONSE of that frame
-        # you get status, and in the next word(s) you get the register value(s)
-        # We need to send: RREG_CMD, NULL, NULL, NULL and the response will contain
-        # STATUS, REG_VALUE, CH0_DATA, CH1_DATA
-        resp = self._transfer_frame(self._rreg_cmd(addr), 0x0000, 0x0000, 0x0000)
-        logging.info("ADS131M02 %s: read reg 0x%02x response: %s (len=%d)", 
-                     self.name, addr, [hex(x) for x in resp] if resp else "empty", len(resp))
-        if len(resp) < 2:
+        # For ADS131M02: Register read is a 2-frame operation
+        # Frame 1: Send RREG command
+        # Frame 2: Send NULL command, register data appears in response word 1
+        resp1 = self._transfer_frame(self._rreg_cmd(addr), 0x0000, 0x0000, 0x0000)
+        logging.info("ADS131M02 %s: read reg 0x%02x frame1: %s", 
+                     self.name, addr, [hex(x) for x in resp1] if resp1 else "empty")
+        # Send NULL frame to get the register data
+        resp2 = self._transfer_frame(0x0000, 0x0000, 0x0000, 0x0000)
+        logging.info("ADS131M02 %s: read reg 0x%02x frame2: %s", 
+                     self.name, addr, [hex(x) for x in resp2] if resp2 else "empty")
+        if len(resp2) < 2:
             raise self.printer.command_error(
                 "ADS131M02 %s: no response reading reg 0x%02x" % (self.name, addr))
-        # Try different word positions to see where the data actually is
-        logging.info("ADS131M02 %s: read reg 0x%02x words: [0]=0x%04x [1]=0x%04x [2]=0x%04x [3]=0x%04x", 
-                     self.name, addr, resp[0], resp[1] if len(resp) > 1 else 0,
-                     resp[2] if len(resp) > 2 else 0, resp[3] if len(resp) > 3 else 0)
-        # The register value should be in word 1 (after the status word)
-        return resp[1]
+        # The register value should be in word 1 of the second frame
+        logging.info("ADS131M02 %s: read reg 0x%02x frame2 words: [0]=0x%04x [1]=0x%04x [2]=0x%04x [3]=0x%04x", 
+                     self.name, addr, resp2[0], resp2[1] if len(resp2) > 1 else 0,
+                     resp2[2] if len(resp2) > 2 else 0, resp2[3] if len(resp2) > 3 else 0)
+        return resp2[1]
 
     def _write_reg(self, addr, value):
         """Write a single register."""
