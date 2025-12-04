@@ -26,7 +26,7 @@ SAMPLE_ERROR_RESET = 0x40000000  # 1 << 30
 
 # Chip Documentation: https://www.ti.com/lit/ds/symlink/ads131m02.pdf
 
-class ADS131M02:
+class ADS131M02(LoadCellSensor):
     def __init__(self, config: ConfigWrapper):
         self.printer: Printer = config.get_printer()
         self.name = config.get_name().split()[-1]
