@@ -196,9 +196,9 @@ class ADS131M02(LoadCellSensor):
         # Send write command - response will come in next frame
         self._send_frame(self._wreg_cmd(addr), value, 0x0000, 0x0000)
         # Send NULL command to complete the write and get the response
-        self._send_frame(0x0000, 0x0000, 0x0000, 0x0000)
-        # Small delay after write to allow register to update
-        self.reactor.pause(self.reactor.monotonic() + 0.001)
+        resp = self._transfer_frame(0x0000, 0x0000, 0x0000, 0x0000)
+        # Additional delay after write to ensure register update completes
+        self.reactor.pause(self.reactor.monotonic() + 0.002)
 
     def _write_and_verify_reg(self, addr, value):
         """Write a register and verify the value was set."""
@@ -212,8 +212,11 @@ class ADS131M02(LoadCellSensor):
     def reset_chip(self):
         self._send_frame(RESET_CMD, 0x0000, 0x0000, 0x0000)
         # Wait for reset to complete (datasheet specifies tREADY = 2^14 * tCLKIN max)
-        # With 8.192MHz CLKIN, this is ~2ms. Use 10ms to be safe.
-        self.reactor.pause(self.reactor.monotonic() + 0.010)
+        # With 8.192MHz CLKIN, this is ~2ms. Use 20ms to be safe.
+        self.reactor.pause(self.reactor.monotonic() + 0.020)
+        # Send a few NULL frames to synchronize communication
+        self._send_frame(0x0000, 0x0000, 0x0000, 0x0000)
+        self.reactor.pause(self.reactor.monotonic() + 0.002)
         # Read status to confirm chip is responsive (don't validate specific bits
         # as reset state can vary based on clock/power conditions)
         status = self._read_reg(STATUS_REG)
