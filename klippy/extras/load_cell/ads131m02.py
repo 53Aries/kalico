@@ -181,24 +181,24 @@ class ADS131M02(LoadCellSensor):
 
     def _read_reg(self, addr):
         """Read a single register, returns 16-bit value."""
-        # Send read command
-        self._send_frame(self._rreg_cmd(addr), 0x0000, 0x0000, 0x0000)
-        # Send NULL command to get the response (response comes in next frame)
-        resp = self._transfer_frame(0x0000, 0x0000, 0x0000, 0x0000)
+        # For ADS131M02: send RREG command, then in the RESPONSE of that frame
+        # you get status, and in the next word(s) you get the register value(s)
+        # We need to send: RREG_CMD, NULL, NULL, NULL and the response will contain
+        # STATUS, REG_VALUE, CH0_DATA, CH1_DATA
+        resp = self._transfer_frame(self._rreg_cmd(addr), 0x0000, 0x0000, 0x0000)
         logging.info("ADS131M02 %s: read reg 0x%02x response: %s", 
                      self.name, addr, [hex(x) for x in resp] if resp else "empty")
         if len(resp) < 2:
             raise self.printer.command_error(
                 "ADS131M02 %s: no response reading reg 0x%02x" % (self.name, addr))
-        # The register value is in word 1 (after the status word)
+        # The register value should be in word 1 (after the status word)
         return resp[1]
 
     def _write_reg(self, addr, value):
         """Write a single register."""
-        # Send write command - response will come in next frame
-        self._send_frame(self._wreg_cmd(addr), value, 0x0000, 0x0000)
-        # Send NULL command to complete the write and get the response
-        resp = self._transfer_frame(0x0000, 0x0000, 0x0000, 0x0000)
+        # For ADS131M02: send WREG command with register value in word 1
+        # Response will be: STATUS, (ignored), CH0_DATA, CH1_DATA
+        resp = self._transfer_frame(self._wreg_cmd(addr), value, 0x0000, 0x0000)
         logging.info("ADS131M02 %s: write reg 0x%02x=0x%04x response: %s", 
                      self.name, addr, value, [hex(x) for x in resp] if resp else "empty")
         # Additional delay after write to ensure register update completes
