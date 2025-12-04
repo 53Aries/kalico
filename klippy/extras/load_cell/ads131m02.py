@@ -167,7 +167,10 @@ class ADS131M02(LoadCellSensor):
         result = []
         for i in range(0, len(resp), 3):
             if i + 1 < len(resp):
-                result.append((resp[i] << 8) | resp[i + 1])
+                # Ensure bytes are integers before bit operations
+                byte0 = int(resp[i]) if isinstance(resp[i], str) else resp[i]
+                byte1 = int(resp[i + 1]) if isinstance(resp[i + 1], str) else resp[i + 1]
+                result.append((byte0 << 8) | byte1)
         return result
 
     # --- Command Helpers ---
