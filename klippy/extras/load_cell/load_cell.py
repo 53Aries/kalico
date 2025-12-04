@@ -9,6 +9,7 @@ from klippy.configfile import ConfigWrapper
 from klippy.extras.load_cell.interfaces import BulkAdcSensor
 from klippy.extras.load_cell import hx71x
 from klippy.extras.load_cell import ads1220
+from klippy.extras.load_cell import ads131m02
 from klippy.extras.bulk_sensor import BatchWebhooksClient
 
 
