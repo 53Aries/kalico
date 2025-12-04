@@ -181,15 +181,22 @@ class ADS131M02(LoadCellSensor):
 
     def _read_reg(self, addr):
         """Read a single register, returns 16-bit value."""
-        resp = self._transfer_frame(self._rreg_cmd(addr), 0x0000, 0x0000, 0x0000)
-        if len(resp) < 4:
+        # Send read command
+        self._send_frame(self._rreg_cmd(addr), 0x0000, 0x0000, 0x0000)
+        # Send NULL command to get the response (response comes in next frame)
+        resp = self._transfer_frame(0x0000, 0x0000, 0x0000, 0x0000)
+        if len(resp) < 2:
             raise self.printer.command_error(
                 "ADS131M02 %s: no response reading reg 0x%02x" % (self.name, addr))
-        return resp[3]
+        # The register value is in word 1 (after the status word)
+        return resp[1]
 
     def _write_reg(self, addr, value):
         """Write a single register."""
+        # Send write command - response will come in next frame
         self._send_frame(self._wreg_cmd(addr), value, 0x0000, 0x0000)
+        # Send NULL command to complete the write and get the response
+        self._send_frame(0x0000, 0x0000, 0x0000, 0x0000)
         # Small delay after write to allow register to update
         self.reactor.pause(self.reactor.monotonic() + 0.001)
 
