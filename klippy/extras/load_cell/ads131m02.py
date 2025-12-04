@@ -208,6 +208,9 @@ class ADS131M02(LoadCellSensor):
         """Write a register and verify the value was set."""
         self._write_reg(addr, value)
         actual = self._read_reg(addr)
+        logging.info("ADS131M02 %s: verify reg 0x%02x: wrote %s (type %s), read %s (type %s), equal=%s",
+                     self.name, addr, hex(value), type(value).__name__, 
+                     hex(actual), type(actual).__name__, actual == value)
         if actual != value:
             raise self.printer.command_error(
                 "ADS131M02 %s: reg 0x%02x write failed: "
