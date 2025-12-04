@@ -189,11 +189,15 @@ class ADS131M02(LoadCellSensor):
         # We need to send: RREG_CMD, NULL, NULL, NULL and the response will contain
         # STATUS, REG_VALUE, CH0_DATA, CH1_DATA
         resp = self._transfer_frame(self._rreg_cmd(addr), 0x0000, 0x0000, 0x0000)
-        logging.info("ADS131M02 %s: read reg 0x%02x response: %s", 
-                     self.name, addr, [hex(x) for x in resp] if resp else "empty")
+        logging.info("ADS131M02 %s: read reg 0x%02x response: %s (len=%d)", 
+                     self.name, addr, [hex(x) for x in resp] if resp else "empty", len(resp))
         if len(resp) < 2:
             raise self.printer.command_error(
                 "ADS131M02 %s: no response reading reg 0x%02x" % (self.name, addr))
+        # Try different word positions to see where the data actually is
+        logging.info("ADS131M02 %s: read reg 0x%02x words: [0]=0x%04x [1]=0x%04x [2]=0x%04x [3]=0x%04x", 
+                     self.name, addr, resp[0], resp[1] if len(resp) > 1 else 0,
+                     resp[2] if len(resp) > 2 else 0, resp[3] if len(resp) > 3 else 0)
         # The register value should be in word 1 (after the status word)
         return resp[1]
 
