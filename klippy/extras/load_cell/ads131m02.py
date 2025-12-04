@@ -230,13 +230,19 @@ class ADS131M02(LoadCellSensor):
         # MODE register (0x02): clear RESET bit (bit 10), set 24-bit word length (bits 9:8 = 01)
         WLENGTH_24 = 0b01 << 8
         CLEAR_RESET = 1 << 10  # Writing 1 clears the RESET status
-        self._write_reg(MODE_REG, WLENGTH_24 | CLEAR_RESET)
+        mode_write_val = WLENGTH_24 | CLEAR_RESET
+        logging.info("ADS131M02 %s: writing MODE=0x%04x (WLENGTH_24=0x%04x)", 
+                     self.name, mode_write_val, WLENGTH_24)
+        self._write_reg(MODE_REG, mode_write_val)
         # Verify only WLENGTH bits (RESET bit auto-clears after write)
         mode_val = self._read_reg(MODE_REG)
-        if (mode_val & 0x0300) != WLENGTH_24:
+        mode_masked = mode_val & 0x0300
+        logging.info("ADS131M02 %s: MODE read back 0x%04x, masked=0x%04x, expected=0x%04x", 
+                     self.name, mode_val, mode_masked, WLENGTH_24)
+        if mode_masked != WLENGTH_24:
             raise self.printer.command_error(
-                "ADS131M02 %s: MODE reg write failed: got 0x%04x"
-                % (self.name, mode_val))
+                "ADS131M02 %s: MODE reg write failed: got 0x%04x, masked 0x%04x != expected 0x%04x"
+                % (self.name, mode_val, mode_masked, WLENGTH_24))
         # CLOCK register (0x03): set OSR for sample rate, high resolution mode
         # OSR[2:0] at bits 4:2, PWR[1:0] at bits 1:0
         # PWR=10 for high-resolution mode, CH0_EN and CH1_EN at bits 8:9
