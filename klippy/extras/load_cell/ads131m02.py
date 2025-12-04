@@ -235,6 +235,10 @@ class ADS131M02(LoadCellSensor):
         logging.info("ADS131M02 %s: reset complete, STATUS=0x%04x", self.name, status)
 
     def setup_chip(self):
+        # Read MODE register default value first
+        mode_default = self._read_reg(MODE_REG)
+        logging.info("ADS131M02 %s: MODE register default value: 0x%04x", self.name, mode_default)
+        
         # MODE register (0x02): clear RESET bit (bit 10), set 24-bit word length (bits 9:8 = 01)
         WLENGTH_24 = 0b01 << 8
         CLEAR_RESET = 1 << 10  # Writing 1 clears the RESET status
