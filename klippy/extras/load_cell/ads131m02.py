@@ -208,10 +208,12 @@ class ADS131M02(LoadCellSensor):
         # With 8.192MHz CLKIN, this is ~2ms. Use 10ms to be safe.
         self.reactor.pause(self.reactor.monotonic() + 0.010)
         status = self._read_reg(STATUS_REG)
-        if not (status & STATUS_RESET_BIT):
+        # After reset, the STATUS register should have LOCK bit (bit 15) set
+        # Check for LOCK bit (0x8000) to verify chip responded correctly
+        if not (status & 0x8000):
             raise self.printer.command_error(
                 "ADS131M02 %s: reset failed, STATUS=0x%04x "
-                "(expected RESET bit set). Check wiring and connections."
+                "(expected LOCK bit set). Check wiring and connections."
                 % (self.name, status))
 
     def setup_chip(self):
