@@ -204,6 +204,8 @@ class ADS131M02(LoadCellSensor):
         resp = self._transfer_frame(self._wreg_cmd(addr), value, 0x0000, 0x0000)
         logging.info("ADS131M02 %s: write reg 0x%02x=0x%04x response: %s", 
                      self.name, addr, value, [hex(x) for x in resp] if resp else "empty")
+        # Send a NULL frame to allow the write to complete
+        self._send_frame(0x0000, 0x0000, 0x0000, 0x0000)
         # Additional delay after write to ensure register update completes
         self.reactor.pause(self.reactor.monotonic() + 0.002)
 
