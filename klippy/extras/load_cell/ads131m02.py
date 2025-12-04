@@ -185,6 +185,8 @@ class ADS131M02(LoadCellSensor):
         self._send_frame(self._rreg_cmd(addr), 0x0000, 0x0000, 0x0000)
         # Send NULL command to get the response (response comes in next frame)
         resp = self._transfer_frame(0x0000, 0x0000, 0x0000, 0x0000)
+        logging.info("ADS131M02 %s: read reg 0x%02x response: %s", 
+                     self.name, addr, [hex(x) for x in resp] if resp else "empty")
         if len(resp) < 2:
             raise self.printer.command_error(
                 "ADS131M02 %s: no response reading reg 0x%02x" % (self.name, addr))
@@ -197,6 +199,8 @@ class ADS131M02(LoadCellSensor):
         self._send_frame(self._wreg_cmd(addr), value, 0x0000, 0x0000)
         # Send NULL command to complete the write and get the response
         resp = self._transfer_frame(0x0000, 0x0000, 0x0000, 0x0000)
+        logging.info("ADS131M02 %s: write reg 0x%02x=0x%04x response: %s", 
+                     self.name, addr, value, [hex(x) for x in resp] if resp else "empty")
         # Additional delay after write to ensure register update completes
         self.reactor.pause(self.reactor.monotonic() + 0.002)
 
