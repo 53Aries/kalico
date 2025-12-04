@@ -5,13 +5,13 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from klippy.configfile import ConfigWrapper
 from klippy.printer import SubsystemComponentCollection, Printer
-from . import hx71x, ads1220
+from . import hx71x, ads1220, ads131m02
 from .load_cell import LoadCell
 
 
 # register sensors that implement BulkAdcSensor
 def register_components(subsystem: SubsystemComponentCollection):
-    sensors = hx71x.HX71X_SENSOR_TYPES | ads1220.ADS1220_SENSOR_TYPE
+    sensors = hx71x.HX71X_SENSOR_TYPES | ads1220.ADS1220_SENSOR_TYPE | ads131m02.ADS131M02_SENSOR_TYPE
     for name, sensor in sensors.items():
         subsystem.register_component("load_cell_sensors", name, sensor)
 
