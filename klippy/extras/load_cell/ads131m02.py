@@ -8,6 +8,7 @@ from klippy.extras import bus
 from klippy.extras.bulk_sensor import FixedFreqReader, \
     BatchBulkHelper
 from klippy.pins import PrinterPins
+from klippy.extras.load_cell.interfaces import LoadCellSensor
 
 # Constants
 BYTES_PER_SAMPLE = 4
